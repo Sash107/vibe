@@ -11,3 +11,61 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum Role {
+  admin
+  user
+}
+
+model User {
+  id         Int       @id @default(autoincrement())
+  username   String    @unique
+  email      String    @unique
+  password   String?
+  name       String?
+  role       Role      @default(user)
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now())
+  projects   Project[]
+}
+
+model Project {
+  id          Int       @id @default(autoincrement())
+  user_id     Int
+  name        String
+  description String
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @default(now())
+  user        User      @relation(fields: [user_id], references: [id])
+  files       File[]
+  messages    Message[]
+}
+
+model File {
+  id           Int           @id @default(autoincrement())
+  project_id   Int
+  path         String
+  content      String
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @default(now())
+  project      Project       @relation(fields: [project_id], references: [id])
+  fileVersions fileVersion[]
+}
+
+model fileVersion {
+  id             Int      @id @default(autoincrement())
+  file_id        Int
+  version_number Int
+  content        String
+  created_at     DateTime @default(now())
+  file           File     @relation(fields: [file_id], references: [id])
+}
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  role       Role
+  content    String
+  created_at DateTime @default(now())
+  project_id Int
+  project    Project  @relation(fields: [project_id], references: [id])
+}
