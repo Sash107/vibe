@@ -11,3 +11,7 @@ export const userLoginSchema=z.object({
         password:z.string().trim()
 }) 
 
+export const projectSchema=z.object({
+        name:z.string().min(1,{error:"Name is required"}),
+        description:z.string()
+})
