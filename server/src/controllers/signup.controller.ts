@@ -42,7 +42,11 @@ export const signupController=async(req:Request,res:Response)=>{
                 if (!secret) throw new Error("JWT_SECRET is not defined");
 
                 const token=jwt.sign({id:user.id,role:user.role},secret,{expiresIn:"1h"})
-                res.cookie("token",token)
+                res.cookie("token",token,{
+                    httpOnly:true,
+                    secure:true,
+                    sameSite:"lax"
+                })
 
                 return res.status(201).json({
                         message:"User created successfully",
