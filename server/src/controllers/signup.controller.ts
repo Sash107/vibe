@@ -49,7 +49,8 @@ export const signupController=async(req:Request,res:Response)=>{
         res.cookie("token",token,{
             httpOnly:true,
             secure:true,
-            sameSite:"lax"
+            sameSite:"lax",
+            maxAge: 60*60*1000
         })
 
         return res.status(201).json({
