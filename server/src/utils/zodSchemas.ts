@@ -1,5 +1,7 @@
 import * as z from "zod";
 
+export const roleEnum=z.enum(["user","assistant"])
+
 export const userSignupSchema=z.object({
     username:z.string().min(3,{error:"Username too short"}).trim(),
     email:z.email({error:"Invalid email"}).trim(),
@@ -18,4 +20,9 @@ export const projectSchema=z.object({
 
 export const getProjectSchema=z.object({
     project_id: z.coerce.number().int("Wrong project id")
+})
+
+export const messageSchema=z.object({
+    project_id:z.coerce.number().int({error:"Project ID is required"}),
+    role:roleEnum
 })
