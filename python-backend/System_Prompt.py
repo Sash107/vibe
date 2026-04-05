@@ -237,6 +237,13 @@ import "./globals.css";
 
 ---
 
+## IMAGE PLACEHOLDERS
+*Try to use only relevent images
+* ALWAYS use absolute working URLs for images and placeholders (e.g., `https://picsum.photos/seed/picsum/200/300`, `https://placehold.co/600x400`)
+* DO NOT USE `/placeholder.svg` or `/placeholder.svg?height=x&width=y`. These will break the Next.js app because the local SVG doesn't exist.
+
+---
+
 ## SERVER vs CLIENT RULE
 
 Default → Server Components

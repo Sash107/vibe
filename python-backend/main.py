@@ -6,6 +6,7 @@ from fastapi.responses import StreamingResponse
 from langchain.messages import HumanMessage,SystemMessage,AIMessage
 from System_Prompt import SYSTEM_PROMPT
 from dotenv import load_dotenv
+from langchain_deepseek import ChatDeepSeek
 
 load_dotenv()
 
@@ -17,6 +18,13 @@ class chatMessages(BaseModel):
     messages:List[chat]
 
 app=FastAPI()
+
+llm = ChatDeepSeek(
+    model="deepseek-reasoner",
+    temperature=0.1,
+    max_tokens=None,
+    timeout=None,
+)
 
 model=ChatOpenRouter(
     model="stepfun/step-3.5-flash:free",
@@ -37,18 +45,23 @@ def convertMessages(messages):
 def ask_llm(messages):
     buffer=""
     final_message=[SystemMessage(content=SYSTEM_PROMPT)]+messages
-    for chunk in model.stream(final_message):
-        if chunk.content:
-            buffer+=chunk.content
-            lines=buffer.split('\n')
-            for line in lines[:-1]:
-                yield line
-                print(line)
-            buffer=lines[-1]
-            
-    if(buffer):
-        yield buffer
-        print(buffer)
+    try:
+        for chunk in llm.stream(final_message):
+            if chunk.content:
+                buffer+=chunk.content
+                lines=buffer.split('\n')
+                for line in lines[:-1]:
+                    yield line + '\n'
+                    print(line)
+                buffer=lines[-1]
+
+        if(buffer):
+            yield buffer
+            print(buffer)
+    except Exception as e:
+        error_msg = f"Error: {str(e)}"
+        print(error_msg)
+        yield error_msg
 
 @app.post('/ask_llm')
 def stream(request:chatMessages):
