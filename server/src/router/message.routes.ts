@@ -5,5 +5,5 @@ import { getAllMessages } from "../controllers/getAllMessages.controller.js";
 
 export const messageRouter=Router();
 
-messageRouter.post('/message/:project_id',authMiddleware,postMessage)
+messageRouter.post('/:project_id/message',authMiddleware,postMessage)
 messageRouter.post('/allMessage/:project_id',authMiddleware,getAllMessages)

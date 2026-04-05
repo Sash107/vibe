@@ -39,17 +39,20 @@ model Project {
   user        User      @relation(fields: [user_id], references: [id])
   files       File[]
   messages    Message[]
+  sandboxes   Sandbox[]
 }
 
 model File {
   id           Int           @id @default(autoincrement())
   project_id   Int
   path         String
-  content      String
+  content      String        @db.Text
   created_at   DateTime      @default(now())
   updated_at   DateTime      @updatedAt
   project      Project       @relation(fields: [project_id], references: [id])
   fileVersions fileVersion[]
+
+  @@unique([project_id, path])
 }
 
 model fileVersion {
@@ -67,5 +70,31 @@ model Message {
   content    String
   created_at DateTime @default(now())
   project_id Int
+  project    Project  @relation(fields: [project_id], references: [id])
+}
+
+model Template {
+  id         Int            @id @default(autoincrement())
+  name       String
+  created_at DateTime       @default(now())
+  files      TemplateFile[]
+}
+
+model TemplateFile {
+  id          Int      @id @default(autoincrement())
+  template_id Int
+  path        String
+  content     String
+  template    Template @relation(fields: [template_id], references: [id])
+}
+
+model Sandbox {
+  id         Int      @id @default(autoincrement())
+  project_id Int
+  sandbox_id String   @unique
+  url        String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  expires_at DateTime
   project    Project  @relation(fields: [project_id], references: [id])
 }
