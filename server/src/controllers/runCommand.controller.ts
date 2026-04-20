@@ -4,12 +4,11 @@ import { Request, Response } from "express";
 export const runCommandController=async (req:Request,res:Response)=>{
     const {path,command}=req.body
     const sandboxId=req.sandboxId
-    const project_id=req.sandboxId
     try{
         const fullPath=`/home/user/myapp/${path||""}`;
         const sandbox=await Sandbox.connect(sandboxId);
         
-        await sandbox.commands.run(`cd ${fullPath} && ${command}`);
+        const cmdResult = await sandbox.commands.run(`cd ${fullPath} && ${command}`);
 
         console.log(`✓ Command Run Succesfully: ${command} at ${path}`);
         res.json({

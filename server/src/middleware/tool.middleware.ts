@@ -18,21 +18,15 @@ declare global {
 }
 
 export const toolMiddleware= async (req:Request,res:Response,next:NextFunction)=>{
-    const token=req.cookies.token
-    if(!token){
-        return res.status(401).json({
-            message: "No user token found"
-        });
-    }
     try{
-        if (!req.user) {
-            return res.status(401).json({ error: "Unauthorized" });
+        const projectId = Number(req.headers["x-project-id"] as string);
+        if (!projectId || isNaN(projectId)) {
+            return res.status(400).json({ error: "Missing or invalid x-project-id header" });
         }
 
-        const projectId = Number(req.headers["x-project-id"] as string);
-        const sandboxId = await sandboxRecord(projectId);
-        req.projectId=projectId;
-        req.sandboxId=sandboxId;
+        const sandboxRecord_ = await sandboxRecord(projectId);
+        req.projectId = projectId;
+        req.sandboxId = sandboxRecord_?.sandbox_id ?? null;
         next();
 
     }catch(err){

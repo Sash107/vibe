@@ -11,7 +11,7 @@ const e2b_sandbox=inngest.createFunction({id:"e2b_sandbox",triggers:[{event:"app
         let SandboxID="";
         let SandboxURL="";
 
-        const {project_id}=event.data;
+        const project_id = parseInt(String(event.data.project_id));
 
         const existing= await step.run("check-db",async()=>{
             return await prisma.sandbox.findFirst({
