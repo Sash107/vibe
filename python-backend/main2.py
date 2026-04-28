@@ -10,6 +10,7 @@ from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from System_Prompt2 import SYSTEM_PROMPT
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 load_dotenv()
 
@@ -45,7 +46,7 @@ def make_tools(projectId: str):
     @tool
     async def terminal(command:str,path:str="")->str:
         """Run a shell command in the sandbox."""
-        print(f"Progress: Running terminal command: {command} in path: {path}")
+        print(f"Progress: Running terminal command: {command} in path: /{path}")
         async with httpx.AsyncClient(timeout=None) as client:
             r = await client.post(f"{TOOL_SERVER}/tools/runCommand",
                      json={
@@ -94,13 +95,14 @@ def make_tools(projectId: str):
 
 def build_graph(projectId: str):
     tools=make_tools(projectId)
+    llm=ChatGoogleGenerativeAI(model="gemma-4-31b-it")
     llm2=ChatDeepSeek(
         model="deepseek-reasoner",
         temperature=0,
         max_tokens=None,
         timeout=None,
     )
-    llm_with_tools=llm2.bind_tools(tools)
+    llm_with_tools=llm.bind_tools(tools)
     
     async def call_model(state:AgentState):
         recent_messages = state["messages"]
@@ -116,7 +118,7 @@ def build_graph(projectId: str):
         summary=""
         if isinstance(response.content,str) and "<task_summary>" in response.content:
             summary=response.content
-            print(f"Progress: Task completed with summary: {summary[:100]}...")
+            print(f"Progress: Task completed with summary: {summary}...")
 
         return {
             "messages":[response],
