@@ -24,16 +24,21 @@ const e2b_sandbox=inngest.createFunction({id:"e2b_sandbox",triggers:[{event:"app
 
         if(existing){
             try{
-                const sandbox=await connectSandbox(SandboxID);
+                const sandbox=await connectSandbox(existing.sandbox_id);
                 await sandbox.files.list("/home/user/myapp")
                 SandboxID=existing.sandbox_id;
                 SandboxURL=existing.url ?? "";
                 return {SandboxID,SandboxURL}
-            }catch(err){console.log("Sandbox Invalid, recreating")}
+            }catch(err){
+                console.log("Sandbox Invalid, recreating");
+                await step.run("delete-dead-sandbox", async () => {
+                    await prisma.sandbox.delete({ where: { id: existing.id } });
+                });
+            }
         }
 
         SandboxID=await step.run("get-sandbox",async()=>{
-            const sandbox= await Sandbox.create("vibe",{timeoutMs:1_800_000});
+            const sandbox= await Sandbox.create("vibe",{timeoutMs:3_600_000});
             return sandbox.sandboxId
         })
 

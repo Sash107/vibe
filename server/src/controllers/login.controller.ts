@@ -39,12 +39,12 @@ export const loginController=async(req:Request,res:Response)=>{
         const secret=process.env.JWT_SECRET;
         if(!secret) throw new Error("JWT Secret is not defined")
 
-        const token=jwt.sign({id:user.id,role:user.role,name:user.name},secret,{expiresIn:"1h"})
+        const token=jwt.sign({id:user.id,role:user.role,name:user.name},secret,{expiresIn:"1d"})
         res.cookie("token",token,{
             httpOnly: true,
             secure:false,
             sameSite:"lax",
-            maxAge: 60*60*1000
+            maxAge: 60*60*1000*24
         })
 
         return res.status(200).json({

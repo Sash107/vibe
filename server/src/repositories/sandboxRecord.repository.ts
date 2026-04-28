@@ -5,6 +5,9 @@ export async function sandboxRecord(project_id: number) {
         where: {
             project_id,
             expires_at: { gt: new Date() }
+        },
+        orderBy: {
+            created_at: 'desc'
         }
     });
 }

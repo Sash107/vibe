@@ -17,13 +17,18 @@ export const createFileController=async(req:Request,res:Response)=>{
         for (const file of files){
             const path = file.path;
             const content = String(file.content ?? "");
-            const fullPath = `/home/user/myapp/${path}`;
+            let normalizedPath = path;
+            if (normalizedPath.startsWith("/home/user/myapp")) {
+                normalizedPath = normalizedPath.slice("/home/user/myapp".length);
+            }
+            normalizedPath = normalizedPath.replace(/^\/+/, "");
+            const fullPath = `/home/user/myapp/${normalizedPath}`;
 
             await sandbox.commands.run(`mkdir -p $(dirname "${fullPath}")`);
             await sandbox.files.write(fullPath, content);
-            await writeInDB(path, content, project_id);
+            await writeInDB(normalizedPath, content, project_id);
 
-            console.log(`✓ Written: ${path}`);
+            console.log(`✓ Written: ${normalizedPath}`);
         }
         res.json({
             success: true,

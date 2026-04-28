@@ -26,7 +26,12 @@ export const readFileController=async(req:Request,res:Response)=>{
         const sandbox = await Sandbox.connect(sandboxId);
 
         for (const path of paths){
-            const fullPath=`/home/user/myapp/${path}`;
+            let normalizedPath = path;
+            if (normalizedPath.startsWith("/home/user/myapp")) {
+                normalizedPath = normalizedPath.slice("/home/user/myapp".length);
+            }
+            normalizedPath = normalizedPath.replace(/^\/+/, "");
+            const fullPath = `/home/user/myapp/${normalizedPath}`;
             try {
                 const content = await sandbox.files.read(fullPath);
                 console.log(`✓ Read: ${path}`);

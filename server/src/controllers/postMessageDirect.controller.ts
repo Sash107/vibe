@@ -4,6 +4,12 @@ import { sandboxRecord } from "../repositories/sandboxRecord.repository.js";
 import { inngest } from "../inngest/index.js";
 import { cloneTemplateToProject } from "../repositories/cloneTemplateToProject.js";
 import { chat } from "../repositories/chats.repository.js";
+import { checkExistingProject } from "../utils/checkExistingProject.js";
+import { setExistingProjectInSandbox } from "../repositories/cloneExistingProject.js";
+import { connectSandbox } from "../utils/connectSandbox.js";
+import { prisma } from "../../lib/prisma.js";
+
+const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
 const PYTHON_SERVER_URL = "http://127.0.0.1:8000/call_llm";
 
@@ -16,10 +22,25 @@ export const invokeLLM = async (req: Request, res: Response) => {
             return res.status(400).json({ message: "No data sent" });
         }
 
-        const sandboxSchema = await sandboxRecord(project_id);
-        if (!sandboxSchema) {
+        let sandboxSchema = await sandboxRecord(project_id);
+        
+        if (sandboxSchema) {
+            try {
+                await connectSandbox(sandboxSchema.sandbox_id);
+            } catch (err) {
+                console.log("Sandbox dead in invokeLLM, deleting from DB...");
+                await prisma.sandbox.delete({ where: { id: sandboxSchema.id } });
+                sandboxSchema = null;
+            }
+        }
+
+        if(!sandboxSchema){
             await inngest.send({ name: "app/getSandboxId", data: { project_id } });
-            return res.status(202).json({ message: "Sandbox is being created. Please retry in a few seconds." });
+            while (!sandboxSchema) {
+                console.log("fetching")
+                await new Promise(res => setTimeout(res, 2000));
+                sandboxSchema = await sandboxRecord(project_id);
+            }
         }
 
         const sandboxID = sandboxSchema.sandbox_id;
@@ -27,7 +48,13 @@ export const invokeLLM = async (req: Request, res: Response) => {
         if (!sandboxID && !sandboxURL) return res.status(400).json({ message: "Sandbox not ready" });
 
         await chat(my_message, project_id);
-        await cloneTemplateToProject(project_id, 3);
+
+        if(await checkExistingProject(project_id)){
+            await setExistingProjectInSandbox(project_id,sandboxID)
+        }
+        else{
+            await cloneTemplateToProject(project_id, 3);
+        }
 
         const payload = {
             projectId: String(project_id),
@@ -41,8 +68,8 @@ export const invokeLLM = async (req: Request, res: Response) => {
 
         const pythonRes = await axios.post(PYTHON_SERVER_URL, payload, {
             headers: { "Content-Type": "application/json" },
-            timeout: 0, // 0 means no timeout
-            validateStatus: () => true, // resolve promise for all HTTP status codes
+            timeout: 0,
+            validateStatus: () => true,
         });
 
         if (pythonRes.status >= 400) {
