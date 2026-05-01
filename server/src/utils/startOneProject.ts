@@ -6,9 +6,7 @@ import { checkExistingProject } from "./checkExistingProject.js";
 import { connectSandbox } from "./connectSandbox.js";
 
 export async function startOneProject(project_id:number){
-    let sandboxSchema=await sandboxRecord(project_id);
-    // Removed early return so we can sync files and start the server
-    
+    let sandboxSchema=await sandboxRecord(project_id);    
     if(!sandboxSchema){
         await inngest.send({ name: "app/getSandboxId", data: { project_id } });
         while (!sandboxSchema) {
@@ -16,7 +14,6 @@ export async function startOneProject(project_id:number){
             sandboxSchema = await sandboxRecord(project_id);
         }
     }
-    
 
     const sandbox_id = sandboxSchema.sandbox_id;
     const sandboxURL = sandboxSchema?.url;

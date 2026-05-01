@@ -55,7 +55,7 @@ const e2b_sandbox=inngest.createFunction({id:"e2b_sandbox",triggers:[{event:"app
                     project_id,
                     sandbox_id:SandboxID,
                     url:SandboxURL,
-                    expires_at:new Date(Date.now()+ 1000*60*30),
+                    expires_at:new Date(Date.now()+ 1000*60*60),
                 }
             })
         })

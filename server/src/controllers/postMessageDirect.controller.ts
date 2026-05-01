@@ -9,9 +9,7 @@ import { setExistingProjectInSandbox } from "../repositories/cloneExistingProjec
 import { connectSandbox } from "../utils/connectSandbox.js";
 import { prisma } from "../../lib/prisma.js";
 
-const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
-
-const PYTHON_SERVER_URL = "http://127.0.0.1:8000/call_llm";
+const PYTHON_SERVER_URL = process.env.PYTHON_SERVER_URL as string;
 
 export const invokeLLM = async (req: Request, res: Response) => {
     try {
@@ -47,7 +45,7 @@ export const invokeLLM = async (req: Request, res: Response) => {
         const sandboxURL = sandboxSchema?.url;
         if (!sandboxID && !sandboxURL) return res.status(400).json({ message: "Sandbox not ready" });
 
-        await chat(my_message, project_id);
+        await chat(my_message, project_id,"user");
 
         if(await checkExistingProject(project_id)){
             await setExistingProjectInSandbox(project_id,sandboxID)
@@ -63,10 +61,9 @@ export const invokeLLM = async (req: Request, res: Response) => {
             ],
         };
 
-        console.log("[invokeLLM] POSTing to Python:", PYTHON_SERVER_URL);
-        console.log("[invokeLLM] Payload:", JSON.stringify(payload));
+        console.log("Payload:", JSON.stringify(payload));
 
-        const pythonRes = await axios.post(PYTHON_SERVER_URL, payload, {
+        const pythonRes:any = await axios.post(PYTHON_SERVER_URL, payload, {
             headers: { "Content-Type": "application/json" },
             timeout: 0,
             validateStatus: () => true,
@@ -76,7 +73,9 @@ export const invokeLLM = async (req: Request, res: Response) => {
             const errData = typeof pythonRes.data === "object" ? JSON.stringify(pythonRes.data) : String(pythonRes.data);
             return res.status(pythonRes.status).json({ error: errData });
         }
-
+        
+        await chat(pythonRes.data.summary, project_id,"assistant");
+        console.log(pythonRes.data.summary);
         return res.status(200).json(pythonRes.data);
 
     } catch (error) {
